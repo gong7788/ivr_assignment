@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import image2
+import image1
+
 import roslib
 import sys
 import rospy
@@ -20,10 +23,16 @@ class image_converter:
         # initialize the bridge between openCV and ROS
         self.bridge = CvBridge()
 
-    def callback(self):
+    #def callback(self):
 
-
-
+    # Calculate the centres for the joints
+    def calculate_centres(self):
+        red_centre = image1.detect_red.append(image2.detect_red[0], 1)
+        green_centre = image1.detect_green.append(image2.detect_green[0], 1)
+        blue_centre = image1.detect_blue.append(image2.detect_blue[0], 1)
+        yellow_centre = image1.detect_yellow.append(image2.detect_yellow[0], 1)
+        centres = [red_centre, green_centre, blue_centre, yellow_centre]
+        return centres
 
 # call the class
 def main(args):
