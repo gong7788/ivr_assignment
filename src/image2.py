@@ -129,14 +129,14 @@ class image_converter:
       print(e)
     # Uncomment if you want to save the image
     #cv2.imwrite('image_copy.png', cv_image)
-    im2=cv2.imshow('window2', self.cv_image2)
-    cv2.waitKey(1)
+    # im2=cv2.imshow('window2', self.cv_image2)
+    # cv2.waitKey(1)
 
-    self.detect_target(self.cv_image2)
-    target_position = self.detect_target(self.cv_image2)
 
-    self.target_pub = Float64MultiArray()
-    self.target_pub.data = target_position
+    target_position = Float64MultiArray()
+    target_position.data = self.detect_red(self.cv_image2)
+    #print('yz', target_position.data)
+
     # Publish the results
     try:
       self.image_pub2.publish(self.bridge.cv2_to_imgmsg(self.cv_image2, "bgr8"))

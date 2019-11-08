@@ -20,7 +20,9 @@ class image_converter:
     # initialize a publisher to send images from camera1 to a topic named image_topic1
     self.image_pub1 = rospy.Publisher("image_topic1",Image, queue_size = 1)
     # initialize a subscriber to recieve messages rom a topic named /robot/camera1/image_raw and use callback function to recieve data
-    self.image_sub1 = rospy.Subscriber("/camera1/robot/image_raw",Image,self.callback1)
+    self.image_sub1 = rospy.Subscriber("/camera1/robot/image_raw", Image, self.callback1)
+
+    self.target_pub = rospy.Publisher("/camera1/target_position", Float64MultiArray, queue_size=10)
     # initialize the bridge between openCV and ROS
     self.bridge = CvBridge()
 
@@ -122,17 +124,25 @@ class image_converter:
     # Recieve the image
     try:
       self.cv_image1 = self.bridge.imgmsg_to_cv2(data, "bgr8")
+
     except CvBridgeError as e:
       print(e)
-    
+
+    # target_position = Float64MultiArray()
+    # target_position.data = self.detect_target(self.cv_image1)
+
+    target_position = Float64MultiArray()
+    target_position.data = self.detect_red(self.cv_image1)
+
     # Uncomment if you want to save the image
     #cv2.imwrite('image_copy.png', cv_image)
 
-    im1=cv2.imshow('window1', self.cv_image1)
-    cv2.waitKey(1)
+    # im1=cv2.imshow('window1', self.cv_image1)
+    # cv2.waitKey(1)
     # Publish the results
     try: 
       self.image_pub1.publish(self.bridge.cv2_to_imgmsg(self.cv_image1, "bgr8"))
+      self.target_pub.publish(target_position)
     except CvBridgeError as e:
       print(e)
 
