@@ -12,7 +12,7 @@ from cv_bridge import CvBridge, CvBridgeError
 
 
 class image_converter:
-# XZ camera
+# YZ camera
   # Defines publisher and subscriber
   def __init__(self):
     # initialize the node named image_processing
@@ -41,7 +41,7 @@ class image_converter:
     M = cv2.moments(mask)
     if M['m00'] == 0:
       # If not detect red, return green position
-      self.detect_green(image)
+      return self.detect_green(image)
     cx = int(M['m10'] / M['m00'])
     cy = int(M['m01'] / M['m00'])
     return np.array([cx, cy])
@@ -61,7 +61,7 @@ class image_converter:
     M = cv2.moments(mask)
     if M['m00'] == 0:
       # If not detect green, return blue position
-      self.detect_blue(image)
+      return self.detect_blue(image)
     cx = int(M['m10'] / M['m00'])
     cy = int(M['m01'] / M['m00'])
     return np.array([cx, cy])
@@ -131,18 +131,32 @@ class image_converter:
     # target_position = Float64MultiArray()
     # target_position.data = self.detect_target(self.cv_image1)
 
-    target_position = Float64MultiArray()
-    target_position.data = self.detect_red(self.cv_image1)
+
 
     # Uncomment if you want to save the image
     #cv2.imwrite('image_copy.png', cv_image)
 
-    # im1=cv2.imshow('window1', self.cv_image1)
+    # im1=cv2.imshow('YZ', self.cv_image1)
     # cv2.waitKey(1)
+
+    # YZ_positions = [red, green, blue, yellow, target]
+
+    red_pos = self.detect_red(self.cv_image1)
+    green_pos = self.detect_green(self.cv_image1)
+    blue_pos = self.detect_blue(self.cv_image1)
+    yellow_pos = self.detect_yellow(self.cv_image1)
+    target_position = self.detect_target(self.cv_image1)
+
+    YZ_positions = np.concatenate((red_pos, green_pos, blue_pos, yellow_pos, target_position), axis=0)
+
+
+    positions = Float64MultiArray()
+    positions.data = YZ_positions
+
     # Publish the results
     try: 
       self.image_pub1.publish(self.bridge.cv2_to_imgmsg(self.cv_image1, "bgr8"))
-      self.target_pub.publish(target_position)
+      self.target_pub.publish(positions)
     except CvBridgeError as e:
       print(e)
 

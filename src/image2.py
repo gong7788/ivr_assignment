@@ -12,7 +12,7 @@ from cv_bridge import CvBridge, CvBridgeError
 
 
 class image_converter:
-# YZ camera
+# XZ camera
   # Defines publisher and subscriber
   def __init__(self):
     # initialize the node named image_processing
@@ -41,7 +41,7 @@ class image_converter:
     M = cv2.moments(mask)
     if M['m00'] == 0:
       # If not detect red, return green position
-      self.detect_green(image)
+      return self.detect_green(image)
     cx = int(M['m10'] / M['m00'])
     cy = int(M['m01'] / M['m00'])
     return np.array([cx, cy])
@@ -55,15 +55,16 @@ class image_converter:
             The position of red joint in pixel (Top-left:[0 , 0], Right-down:[width, height])
     """
     mask = cv2.inRange(image, (0, 100, 0), (100, 255, 100))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel=np.ones((5, 5), dtype=np.uint8))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel=np.ones((2, 2), dtype=np.uint8))
     # cv2.imshow('window 3', mask)
     # cv2.waitKey(2)
     M = cv2.moments(mask)
     if M['m00'] == 0:
       # If not detect green, return blue position
-      self.detect_blue(image)
+      return self.detect_blue(image)
     cx = int(M['m10'] / M['m00'])
     cy = int(M['m01'] / M['m00'])
+    # print(cx,cy)
     return np.array([cx, cy])
 
   def detect_blue(self, image):
@@ -129,18 +130,26 @@ class image_converter:
       print(e)
     # Uncomment if you want to save the image
     #cv2.imwrite('image_copy.png', cv_image)
-    # im2=cv2.imshow('window2', self.cv_image2)
+    # im2=cv2.imshow('XZ', self.cv_image2)
     # cv2.waitKey(1)
 
+    # XZ_positions = [red, green, blue, yellow, target]
+    red_pos = self.detect_red(self.cv_image2)
+    green_pos = self.detect_green(self.cv_image2)
+    blue_pos = self.detect_blue(self.cv_image2)
+    yellow_pos = self.detect_yellow(self.cv_image2)
+    target_position = self.detect_target(self.cv_image2)
 
-    target_position = Float64MultiArray()
-    target_position.data = self.detect_red(self.cv_image2)
+    XZ_positions = np.concatenate((red_pos, green_pos, blue_pos, yellow_pos, target_position), axis=0)
+
+    positions = Float64MultiArray()
+    positions.data = XZ_positions
     #print('yz', target_position.data)
 
     # Publish the results
     try:
       self.image_pub2.publish(self.bridge.cv2_to_imgmsg(self.cv_image2, "bgr8"))
-      self.target_pub.publish(target_position)
+      self.target_pub.publish(positions)
     except CvBridgeError as e:
       print(e)
 
