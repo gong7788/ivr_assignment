@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="17c12a46-a755-4d0c-96d9-1131b22749f1" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/ivr_assignment.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ivr_assignment.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/image_processing.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/image_processing.py" afterDir="false" />
-    </list>
+    <list default="true" id="17c12a46-a755-4d0c-96d9-1131b22749f1" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +38,7 @@
       <option name="presentableId" value="Default" />
       <updated>1573057536018</updated>
       <workItem from="1573057540719" duration="420000" />
+      <workItem from="1573128952011" duration="122000" />
     </task>
     <servers />
   </component>
@@ -52,7 +50,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>
