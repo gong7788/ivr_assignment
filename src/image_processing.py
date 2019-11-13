@@ -76,6 +76,14 @@ class image_converter:
         joint1 = self.angle_between_vectors(proj, x_axis)
         return [joint1, joint2, joint3, joint4]
 
+    def target_coordinates(self, target, base):
+        """Transforms pixel coordinates into meters
+
+            :param target: [x,y,z] target coordinates in pixel
+            :param base:   [x,y,z] base(yellow joint) coordinates in pixel
+            :return        [x,y,z] coordinates in meters
+        """
+
     def callback(self, xz_pos, yz_pos):
         joint1 = self.find_angles(xz_pos.data, yz_pos.data)[0]
         joint2 = self.find_angles(xz_pos.data, yz_pos.data)[1]
