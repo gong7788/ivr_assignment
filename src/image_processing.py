@@ -65,18 +65,23 @@ class image_converter:
         vector_down = centers[2] - centers[3]
 
         joint4 = self.angle_between_vectors(vector_up, vector_middle)
-        joint3 = self.angle_between_vectors(vector_middle, vector_down)
-        x_axis = np.array([1, 0, 0])
+        #joint3 = self.angle_between_vectors(vector_middle, vector_down)
+        x_axis = np.array([0, -1, 0])
         proj = np.array([vector_middle[0], vector_middle[1], 0])
         # print(proj)
+        proj_yz = np.array([0, vector_middle[1], vector_middle[2]])
+        proj_xz = np.array([vector_middle[0], 0, vector_middle[2]])
+        joint2 = self.angle_between_vectors(proj_yz, np.array([0, 0, -1]))
+        joint3 = self.angle_between_vectors(proj_xz, np.array([0, 0, -1]))
         joint1 = self.angle_between_vectors(proj, x_axis)
-        return [joint1, joint3, joint4]
+        return [joint1, joint2, joint3, joint4]
 
     def callback(self, xz_pos, yz_pos):
         joint1 = self.find_angles(xz_pos.data, yz_pos.data)[0]
-        joint3 = self.find_angles(xz_pos.data, yz_pos.data)[1]
-        joint4 = self.find_angles(xz_pos.data, yz_pos.data)[2]
-        print('joint1:{:.2f}, joint3:{:.2f}, joint4:{:.2f}'.format(joint1, joint3, joint4))
+        joint2 = self.find_angles(xz_pos.data, yz_pos.data)[1]
+        joint3 = self.find_angles(xz_pos.data, yz_pos.data)[2]
+        joint4 = self.find_angles(xz_pos.data, yz_pos.data)[3]
+        print('joint1:{:.2f}, joint2:{:.2f}, joint3:{:.2f}, joint4:{:.2f}'.format(joint1, joint2, joint3, joint4))
 
 
         #control the robot joints
