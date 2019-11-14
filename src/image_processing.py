@@ -33,17 +33,6 @@ class image_converter:
     #TODO finds joints
     #TODO transfer to meters coordinate
 
-    def angle_between_vectors(self, vector1, vector2):
-        """Finds angles between two vectors
-
-            :param: vector1: first vector
-            :param: vector2: second vector
-            :return: angle
-        """
-        Lx = np.sqrt(vector1.dot(vector1))
-        Ly = np.sqrt(vector2.dot(vector2))
-        # print (vector1.dot(vector2)/Lx*Ly)
-        return np.arccos(vector1.dot(vector2)/(Lx*Ly))
 
     def find_angles(self, centers):
         """Finds joints angles
@@ -53,22 +42,16 @@ class image_converter:
             :return angles
         """
         # centers = [red, green, blue, yellow, target] -- red:[x,y,z] ...
+        red_true = centers[0]
+        green_true = centers[1]
+        blue_true = centers[2]
 
-        vector_up = centers[0] - centers[1]
-        vector_middle = centers[1] - centers[2]
-        vector_down = centers[2] - centers[3]
+        a = [0, 0, 3, 2]
+        alpha = [1.57, 1.57, 1.57, 0]
+        d = [2, 0, 0, 0]
 
-        joint4 = self.angle_between_vectors(vector_up, vector_middle)
-        #joint3 = self.angle_between_vectors(vector_middle, vector_down)
-        x_axis = np.array([0, -1, 0])
-        proj = np.array([vector_middle[0], vector_middle[1], 0])
-        # print(proj)
-        proj_yz = np.array([0, vector_middle[1], vector_middle[2]])
-        proj_xz = np.array([vector_middle[0], 0, vector_middle[2]])
-        joint2 = self.angle_between_vectors(proj_yz, np.array([0, 0, -1]))
-        joint3 = self.angle_between_vectors(proj_xz, np.array([0, 0, -1]))
-        joint1 = self.angle_between_vectors(proj, x_axis)
-        return [joint1, joint2, joint3, joint4]
+
+
 
     def target_coordinates(self, target, base, blue):
         """Transforms pixel coordinates into meters
@@ -82,6 +65,7 @@ class image_converter:
         target_base = (2 / distance) * (target - base)
         target_base[2] = -target_base[2]
         return target_base
+
 
 
 
@@ -105,7 +89,9 @@ class image_converter:
         target_pub = Float64MultiArray()
         target_pub.data = self.target_coordinates(target, yellow, blue)
 
-
+        print("Red: ", self.target_coordinates(centers[0], yellow, blue))
+        print("Green: ", self.target_coordinates(centers[1], yellow, blue))
+        print("Blue: ", self.target_coordinates(centers[2], yellow, blue))
         #control the robot joints
         # self.joint1 = Float64()
         # self.joint1.data = 0.0
@@ -125,6 +111,33 @@ class image_converter:
             self.target_pub.publish(target_pub)
         except CvBridgeError as e:
             print(e)
+
+
+
+    # def rotation(self, alpha, a, d, theta, yellow):
+    #     Transform = []
+    #     for i in range(4):
+    #         T_theta = np.array([np.cos(theta[i]), -np.sin(theta[i]), 0, 0],
+    #                            [np.sin(theta[i]), np.cos(theta[i]), 0, 0],
+    #                            [0, 0, 1, 0],
+    #                            [0, 0, 0, 1])
+    #         T_d = np.array([1, 0, 0, 0],
+    #                        [0, 1, 0, 0],
+    #                        [0, 0, 1, d[i]],
+    #                        [0, 0, 0, 1])
+    #         T_a = np.array([1, 0, 0, a[i]],
+    #                        [0, 1, 0, 0],
+    #                        [0, 0, 1, 0],
+    #                        [0, 0, 0, 1])
+    #         T_alpha = np.array([1, 0, 0, 0],
+    #                            [0, np.cos(theta[i]), -np.sin(theta[i]), 0],
+    #                            [0,  np.sin(theta[i]), np.cos(theta[i]), 0],
+    #                            [0, 0, 0, 1])
+    #         Transform.append(T_theta.dot(T_d.dot(T_a.dot(T_alpha))))
+    #         return Transform[0].dot(Transform[1].dot(Transform[2].dot(Transform[3])))
+
+
+
 
 
 # call the class
