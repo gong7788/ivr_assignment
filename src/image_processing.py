@@ -34,21 +34,21 @@ class image_converter:
     #TODO transfer to meters coordinate
 
 
-    def find_angles(self, centers):
-        """Finds joints angles
-           The robot is redundant, so multiple answers for joints, ignore joint2
-            :param xz_pos: list, 5 positions in xz plane [red, green, blue, yellow, target]
-            :param yz_pos: list, 5 positions in xz plane
-            :return angles
-        """
-        # centers = [red, green, blue, yellow, target] -- red:[x,y,z] ...
-        red_true = centers[0]
-        green_true = centers[1]
-        blue_true = centers[2]
-
-        a = [0, 0, 3, 2]
-        alpha = [1.57, 1.57, 1.57, 0]
-        d = [2, 0, 0, 0]
+    # def find_angles(self, centers):
+    #     """Finds joints angles
+    #        The robot is redundant, so multiple answers for joints, ignore joint2
+    #         :param xz_pos: list, 5 positions in xz plane [red, green, blue, yellow, target]
+    #         :param yz_pos: list, 5 positions in xz plane
+    #         :return angles
+    #     """
+    #     # centers = [red, green, blue, yellow, target] -- red:[x,y,z] ...
+    #     red_true = centers[0]
+    #     green_true = centers[1]
+    #     blue_true = centers[2]
+    #
+    #     a = [0, 0, 3, 2]
+    #     alpha = [1.57, 1.57, 1.57, 0]
+    #     d = [2, 0, 0, 0]
 
 
 
@@ -67,7 +67,31 @@ class image_converter:
         return target_base
 
 
+    def FK(self, input_theta):
+        theta = [1.57 + input_theta[0], 1.57 + input_theta[1], input_theta[2], -input_theta[3]]
+        a = [0, 0, 3, 2]
+        alpha = [1.57, 1.57, 1.57, 0]
+        d = [2, 0, 0, 0]
 
+        Transform = []
+        for i in range(4):
+            T_theta = np.array([[np.cos(theta[i]), -np.sin(theta[i]), 0, 0],
+                                [np.sin(theta[i]), np.cos(theta[i]), 0, 0],
+                                [0, 0, 1, d[i]],
+                                [0, 0, 0, 1]])
+
+            T_alpha = np.array([[1, 0, 0, a[i]],
+                                [0, np.cos(alpha[i]), -np.sin(alpha[i]), 0],
+                                [0, np.sin(alpha[i]), np.cos(alpha[i]), 0],
+                                [0, 0, 0, 1]])
+
+            Transform.append(T_theta.dot(T_alpha))
+
+        red_co = Transform[0].dot(Transform[1]).dot(Transform[2]).dot(Transform[3])[0:3, -1]
+        # green_co = Transform[0].dot(Transform[1]).dot(Transform[2])[0:3, -1]
+        # blue_co = Transform[0][0:3, -1]
+
+        return red_co
 
     def callback(self, xz_pos, yz_pos):
         centers = []
@@ -77,10 +101,10 @@ class image_converter:
             z = (xz_pos.data[2 * i + 1] + yz_pos.data[2 * i + 1]) / 2
             centers.append(np.array([x, y, z]))
 
-        joint1 = self.find_angles(centers)[0]
-        joint2 = self.find_angles(centers)[1]
-        joint3 = self.find_angles(centers)[2]
-        joint4 = self.find_angles(centers)[3]
+        # joint1 = self.find_angles(centers)[0]
+        # joint2 = self.find_angles(centers)[1]
+        # joint3 = self.find_angles(centers)[2]
+        # joint4 = self.find_angles(centers)[3]
         # print('joint1:{:.2f}, joint2:{:.2f}, joint3:{:.2f}, joint4:{:.2f}'.format(joint1, joint2, joint3, joint4))
         blue = centers[-3]
         yellow = centers[-2]
@@ -89,9 +113,16 @@ class image_converter:
         target_pub = Float64MultiArray()
         target_pub.data = self.target_coordinates(target, yellow, blue)
 
-        print("Red: ", self.target_coordinates(centers[0], yellow, blue))
-        print("Green: ", self.target_coordinates(centers[1], yellow, blue))
-        print("Blue: ", self.target_coordinates(centers[2], yellow, blue))
+        input_theta = [2, 1, 1, 1]
+        np.set_printoptions(suppress=True)
+        true_end = np.array(self.target_coordinates(centers[0], yellow, blue))
+        FK_end = np.array(self.FK(input_theta))
+        print("True end effector: ", true_end)
+        print("FK end effector: ", FK_end)
+        print("Euclidean distance error: ", np.sqrt( np.sum((FK_end - true_end)**2)))
+        # print("Green: ", self.target_coordinates(centers[1], yellow, blue))
+        # print("Blue: ", self.target_coordinates(centers[2], yellow, blue))
+
         #control the robot joints
         # self.joint1 = Float64()
         # self.joint1.data = 0.0

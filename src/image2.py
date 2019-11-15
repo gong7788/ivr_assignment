@@ -144,7 +144,11 @@ class image_converter:
 
     positions = Float64MultiArray()
     positions.data = XZ_positions
-    #print('yz', target_position.data)
+
+    # print('red', red_pos)
+    # print('green', green_pos)
+    # print('blue', blue_pos)
+    # print('yellow', yellow_pos)
 
     # Publish the results
     try:

@@ -36,8 +36,9 @@ class image_converter:
     """
     mask = cv2.inRange(image, (0, 0, 100), (100, 100, 255))
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel=np.ones((5, 5), dtype=np.uint8))
-    # cv2.imshow('window 3', mask)
-    # cv2.waitKey(2)
+    cv2.imshow('red', mask)
+    cv2.imshow('window 4', image)
+    cv2.waitKey(2)
     M = cv2.moments(mask)
     if M['m00'] == 0:
       # If not detect red, return green position
@@ -91,7 +92,7 @@ class image_converter:
     """
     mask = cv2.inRange(image, (0, 100, 100), (100, 255, 139))
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel=np.ones((5, 5), dtype=np.uint8))
-    # cv2.imshow('window 3', mask)
+    # cv2.imshow('yellow', mask)
     # cv2.waitKey(2)
     M = cv2.moments(mask)
     cx = int(M['m10'] / M['m00'])
@@ -153,6 +154,7 @@ class image_converter:
     positions = Float64MultiArray()
     positions.data = YZ_positions
 
+    print('red', red_pos)
     # Publish the results
     try: 
       self.image_pub1.publish(self.bridge.cv2_to_imgmsg(self.cv_image1, "bgr8"))
