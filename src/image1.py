@@ -137,8 +137,8 @@ class image_converter:
     # Uncomment if you want to save the image
     #cv2.imwrite('image_copy.png', cv_image)
 
-    # im1=cv2.imshow('YZ', self.cv_image1)
-    # cv2.waitKey(1)
+    im1=cv2.imshow('YZ, Camere1', self.cv_image1)
+    cv2.waitKey(1)
 
     # YZ_positions = [red, green, blue, yellow, target]
 

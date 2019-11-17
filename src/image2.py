@@ -130,8 +130,8 @@ class image_converter:
       print(e)
     # Uncomment if you want to save the image
     #cv2.imwrite('image_copy.png', cv_image)
-    # im2=cv2.imshow('XZ', self.cv_image2)
-    # cv2.waitKey(1)
+    im2=cv2.imshow('XZ, Camera2', self.cv_image2)
+    cv2.waitKey(1)
 
     # XZ_positions = [red, green, blue, yellow, target]
     red_pos = self.detect_red(self.cv_image2)
