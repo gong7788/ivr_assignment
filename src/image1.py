@@ -37,7 +37,6 @@ class image_converter:
     mask = cv2.inRange(image, (0, 0, 100), (100, 100, 255))
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel=np.ones((5, 5), dtype=np.uint8))
     # cv2.imshow('red', mask)
-    # cv2.imshow('window 4', image)
     # cv2.waitKey(2)
     M = cv2.moments(mask)
     if M['m00'] == 0:
@@ -57,7 +56,7 @@ class image_converter:
     """
     mask = cv2.inRange(image, (0, 100, 0), (100, 255, 100))
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel=np.ones((5, 5), dtype=np.uint8))
-    # cv2.imshow('window 3', mask)
+    # cv2.imshow('green', mask)
     # cv2.waitKey(2)
     M = cv2.moments(mask)
     if M['m00'] == 0:
@@ -110,7 +109,7 @@ class image_converter:
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(image, (11, 43, 46), (25, 255, 255))
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel=np.ones((8, 8), dtype=np.uint8))
-    # cv2.imshow('window 3', mask)
+    # cv2.imshow('target1', mask)
     # cv2.waitKey(2)
     M = cv2.moments(mask)
     if M['m00'] == 0:
@@ -137,8 +136,8 @@ class image_converter:
     # Uncomment if you want to save the image
     #cv2.imwrite('image_copy.png', cv_image)
 
-    im1=cv2.imshow('YZ, Camere1', self.cv_image1)
-    cv2.waitKey(1)
+    # im1=cv2.imshow('YZ, Camere1', self.cv_image1)
+    # cv2.waitKey(1)
 
     # YZ_positions = [red, green, blue, yellow, target]
 
