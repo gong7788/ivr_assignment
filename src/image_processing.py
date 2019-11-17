@@ -41,20 +41,19 @@ class image_converter:
         self.sync.registerCallback(self.callback)
 
 
-    def fun_trans(self, theta, data):
+    def fun_trans(self, theta):
         q1 = theta[0]
         q2 = theta[1]
         q3 = theta[2]
         q4 = theta[3]
-        return ((3*cos(q3)*sin(q1)*sin(q2)+3*cos(q1)*sin(q3) + 2*cos(q4)*(cos(q3)*sin(q1)*sin(q2)+cos(q1)*sin(q3)) + 2*cos(q2)*sin(q1)*sin(q4) - data[0]),
-        (-3*cos(q1)*cos(q3)*sin(q2) + 3*sin(q1)*sin(q3) + 2*cos(q4)*(-cos(q1)*cos(q3)*sin(q2) + sin(q1)*sin(q3) - 2*cos(q1)*cos(q2)*sin(q4)) - data[1]),
-        (2 + 3*cos(q2)*cos(q3) + 2*cos(q2)*cos(q3)*cos(q4) - 2*sin(q2)*sin(q4) - data[2]),
-        (2 + 3*cos(q2)*cos(q3) - data[3]))
+        return np.array([[3*cos(q3)*sin(q1)*sin(q2)+3*cos(q1)*sin(q3) + 2*cos(q4)*(cos(q3)*sin(q1)*sin(q2)+cos(q1)*sin(q3)) + 2*cos(q2)*sin(q1)*sin(q4)],
+        [-3*cos(q1)*cos(q3)*sin(q2) + 3*sin(q1)*sin(q3) + 2*cos(q4)*(-cos(q1)*cos(q3)*sin(q2) + sin(q1)*sin(q3)) - 2*cos(q1)*cos(q2)*sin(q4)],
+        [2 + 3*cos(q2)*cos(q3) + 2*cos(q2)*cos(q3)*cos(q4) - 2*sin(q2)*sin(q4)]])
 
-    # def error(self, theta, true):
-    #     temp = self.fun_trans(theta)
-    #     estimated = np.array([temp[0][0], temp[1][0], temp[2][0], temp[3][0]])
-    #     return np.sum((estimated - true) ** 2)
+    def cost(self, theta, true):
+        temp = self.fun_trans(theta)
+        estimated = np.array([temp[0][0], temp[1][0], temp[2][0]])
+        return np.sum(np.abs(estimated - true))
 
     def find_angles(self, end_effector, green):
         """Finds joints angles
@@ -64,14 +63,14 @@ class image_converter:
             :param green:             coordinates of green [x, y, z]
             :return angles            four angles [q1, q2, q3, q4]
         """
-        true = [end_effector[0], end_effector[1], end_effector[2], green[2]]
+        true = [[end_effector[0], end_effector[1], end_effector[2]]]
         np.set_printoptions(suppress=True)
-        # res_1 = least_squares(self.error, x0=[0, 0, 0, 0],
-        #                       bounds=([-math.pi, -math.pi / 2, -math.pi / 2, -math.pi / 2], [math.pi, math.pi / 2, math.pi / 2, math.pi / 2]),
-        #                       args = true)
-        res_1 = leastsq(self.fun_trans, (0, 0, 0, 0), args=true)
+        res_1 = least_squares(self.cost, x0=[0, 0, 0, 0],
+                              bounds=([-math.pi, -math.pi / 2, -math.pi / 2, -math.pi / 2], [math.pi, math.pi / 2, math.pi / 2, math.pi / 2]),
+                              args = true, diff_step=0.05)
+        # res_1 = leastsq(self.fun_trans, (0, 0, 0, 0), args=true)
         # print(res_1[0])
-        return res_1[0]
+        return res_1.x
 
     def target_coordinates(self, target, base):
         """Transforms pixel coordinates into meters
@@ -142,13 +141,13 @@ class image_converter:
             :return          joints angles [q1, q2, q3, q4]
         """
         # P gains
-        K_p = np.array([[100, 0, 0],
-                        [0, 100, 0],
-                        [0, 0, 100]])
+        K_p = np.array([[8, 0, 0],
+                        [0, 8, 0],
+                        [0, 0, 8]])
         # D gains
-        K_d = np.array([[0, 0, 0],
-                        [0, 0, 0],
-                        [0, 0, 0]])
+        K_d = np.array([[0.05, 0, 0],
+                        [0, 0.05, 0],
+                        [0, 0, 0.05]])
 
         cur_time = rospy.get_time()
         dt = cur_time - self.time_previous
@@ -198,7 +197,7 @@ class image_converter:
         green = np.array(self.target_coordinates(centers[1], yellow))
         estimate_angles = self.find_angles(true_end, green)
         print("\n ========================================")
-        # print("Estimated angles: ", estimate_angles)
+        print("Estimated angles: ", estimate_angles)
         print("True red position: ", true_end)
         print("Estimated coordinates: ", self.FK(estimate_angles)[0])
         print("Angle error: ", np.sqrt(np.sum((self.FK(estimate_angles)[0] - true_end) ** 2)))
