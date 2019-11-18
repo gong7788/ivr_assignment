@@ -27,6 +27,7 @@ class image_converter:
         self.error_d = np.array([0, 0, 0])
 
         self.target_pub = rospy.Publisher('/target/detected', Float64MultiArray, queue_size=10)
+        self.end_effector_pub = rospy.Publisher('/end_effector/detected', Float64MultiArray, queue_size=10)
 
         self.joints_pub = rospy.Publisher("joints_pos", Float64MultiArray, queue_size=10)
         self.robot_joint1_pub = rospy.Publisher("/robot/joint1_position_controller/command", Float64, queue_size=10)
@@ -141,13 +142,16 @@ class image_converter:
             :return          joints angles [q1, q2, q3, q4]
         """
         # P gains
-        K_p = np.array([[8, 0, 0],
-                        [0, 8, 0],
-                        [0, 0, 8]])
+        K_p = np.array([[15, 0, 0],
+                        [0, 15, 0],
+                        [0, 0, 15]])
+        # K_p = np.array([[10, 0, 0],
+        #                 [0, 10, 0],
+        #                 [0, 0, 10]])
         # D gains
-        K_d = np.array([[0.05, 0, 0],
-                        [0, 0.05, 0],
-                        [0, 0, 0.05]])
+        K_d = np.array([[0.5, 0, 0],
+                        [0, 0.5, 0],
+                        [0, 0, 0.5]])
 
         cur_time = rospy.get_time()
         dt = cur_time - self.time_previous
@@ -163,9 +167,22 @@ class image_converter:
 
         J_inv = np.linalg.pinv(self.calculate_jacobian(angles))  # calculate the psudeo inverse of Jacobian
         # angular velocity of joints
-        dq_d = np.dot(J_inv, (np.dot(K_d, self.error_d.T) + np.dot(K_p, self.error.T)))
+        dq_d = np.dot(J_inv, (np.dot(K_d, self.error_d.transpose()) + np.dot(K_p, self.error.transpose())))
         # angular position of joints
-        q_d = angles + (dt * dq_d)
+        change = dt * dq_d
+        if (np.sum(np.abs(self.error)) < 3):
+            change = change % (0.12*np.sum(np.abs(self.error))*np.sign(change))
+            # print(change)
+        q_d = angles + change
+        # print("\n =====================================")
+        # print("angles: ",angles)
+        # print("change: ",change)
+        # print("after: ",q_d)
+        # print("target: ", pos_target)
+        # print("end: ", pos_end)
+        # print(angles)
+        # print(l)
+        # print(q_d)
         return q_d
 
     def callback(self, xz_pos, yz_pos):
@@ -185,9 +202,6 @@ class image_converter:
         yellow = centers[-2]
         target = centers[-1]
 
-        target_pub = Float64MultiArray()
-        target_pub.data = self.target_coordinates(target, yellow)
-
         np.set_printoptions(suppress=True)
 
         # ---------------Test 1.1, find angles give image------------------------
@@ -196,11 +210,12 @@ class image_converter:
         true_end = np.array(self.target_coordinates(centers[0], yellow))
         green = np.array(self.target_coordinates(centers[1], yellow))
         estimate_angles = self.find_angles(true_end, green)
-        print("\n ========================================")
-        print("Estimated angles: ", estimate_angles)
-        print("True red position: ", true_end)
-        print("Estimated coordinates: ", self.FK(estimate_angles)[0])
-        print("Angle error: ", np.sqrt(np.sum((self.FK(estimate_angles)[0] - true_end) ** 2)))
+        # print("\n ========================================")
+        # print("Estimated angles: ", estimate_angles)
+        # print("True red position: ", true_end)
+        #
+        # print("Estimated coordinates: ", self.FK(estimate_angles)[0])
+        # print("Angle error: ", np.sqrt(np.sum((self.FK(estimate_angles)[0] - true_end) ** 2)))
 
         # ---------------------Test FK---------------------------------------------
         # input_theta = [0, 0, 1, 0]
@@ -217,9 +232,15 @@ class image_converter:
         #TODO: Test PD
 
         q_d = self.control_closed(estimate_angles, target, red, yellow)
-        print ('Target: ', self.target_coordinates(target,yellow))
-        print ("Target error: ", np.sqrt(np.sum((true_end - self.target_coordinates(target, yellow)) ** 2)))
+        # print ('Target: ', self.target_coordinates(target,yellow))
+        # print ("Target error: ", np.sqrt(np.sum((true_end - self.target_coordinates(target, yellow)) ** 2)))
         # --------------------------Set joints-----------------------------------------
+        # target coordinate from camera
+        target_pub = Float64MultiArray()
+        target_pub.data = self.target_coordinates(target, yellow)
+        # end effector coordinate from camera
+        end_effector = Float64MultiArray()
+        end_effector.data = true_end
         # control the robot joints
         self.joint1 = Float64()
         self.joint1.data = q_d[0]
@@ -236,6 +257,7 @@ class image_converter:
             self.robot_joint3_pub.publish(self.joint3)
             self.robot_joint4_pub.publish(self.joint4)
             self.target_pub.publish(target_pub)
+            self.end_effector_pub.publish(end_effector)
         except CvBridgeError as e:
             print(e)
 

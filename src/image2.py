@@ -25,6 +25,7 @@ class image_converter:
     self.target_pub = rospy.Publisher("/camera2/target_position", Float64MultiArray, queue_size=10)
     # initialize the bridge between openCV and ROS
     self.bridge = CvBridge()
+    self.target_pre = np.array([0, 0])
 
   def detect_red(self, image):
     """Finds the position of red joint(end-effect)
@@ -115,9 +116,10 @@ class image_converter:
     M = cv2.moments(mask)
     if M['m00'] == 0:
       #TODO target after red or green joint
-      return [-1, -1]
+      return self.target_pre
     cx = int(M['m10'] / M['m00'])
     cy = int(M['m01'] / M['m00'])
+    self.target_pre = np.array([cx,cy])
     return np.array([cx, cy])
 
 
