@@ -80,6 +80,8 @@ class image_converter:
     M = cv2.moments(mask)
     cx = int(M['m10'] / M['m00'])
     cy = int(M['m01'] / M['m00'])
+    # cv2.imshow('blue', mask)
+    # cv2.waitKey(2)
     return np.array([cx, cy])
 
   def detect_yellow(self, image):
@@ -139,8 +141,8 @@ class image_converter:
     # Uncomment if you want to save the image
     #cv2.imwrite('image_copy.png', cv_image)
 
-    im1=cv2.imshow('YZ, Camere1', self.cv_image1)
-    cv2.waitKey(1)
+    # im1=cv2.imshow('YZ, Camere1', self.cv_image1)
+    # cv2.waitKey(1)
 
     # YZ_positions = [red, green, blue, yellow, target]
 

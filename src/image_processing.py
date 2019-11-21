@@ -54,7 +54,7 @@ class image_converter:
     def cost(self, theta, true):
         temp = self.fun_trans(theta)
         estimated = np.array([temp[0][0], temp[1][0], temp[2][0]])
-        return np.sum(np.abs(estimated - true))
+        return np.sqrt(np.sum((estimated - true)**2))
 
     def find_angles(self, end_effector, green):
         """Finds joints angles
@@ -68,7 +68,7 @@ class image_converter:
         np.set_printoptions(suppress=True)
         res_1 = least_squares(self.cost, x0=[0, 0, 0, 0],
                               bounds=([-math.pi, -math.pi / 2, -math.pi / 2, -math.pi / 2], [math.pi, math.pi / 2, math.pi / 2, math.pi / 2]),
-                              args = true, diff_step=0.05)
+                              args = true, diff_step=0.15)
         # res_1 = leastsq(self.fun_trans, (0, 0, 0, 0), args=true)
         # print(res_1[0])
         return res_1.x
@@ -142,9 +142,9 @@ class image_converter:
             :return          joints angles [q1, q2, q3, q4]
         """
         # P gains
-        K_p = np.array([[15, 0, 0],
-                        [0, 15, 0],
-                        [0, 0, 15]])
+        K_p = np.array([[8, 0, 0],
+                        [0, 8, 0],
+                        [0, 0, 8]])
         # K_p = np.array([[10, 0, 0],
         #                 [0, 10, 0],
         #                 [0, 0, 10]])
@@ -155,6 +155,8 @@ class image_converter:
 
         cur_time = rospy.get_time()
         dt = cur_time - self.time_previous
+        if (dt == 0):
+            dt = 0.02
         self.time_previous = cur_time
         # robot end-effector position
         pos_end = self.target_coordinates(red, yellow)
@@ -170,9 +172,6 @@ class image_converter:
         dq_d = np.dot(J_inv, (np.dot(K_d, self.error_d.transpose()) + np.dot(K_p, self.error.transpose())))
         # angular position of joints
         change = dt * dq_d
-        if (np.sum(np.abs(self.error)) < 3):
-            change = change % (0.12*np.sum(np.abs(self.error))*np.sign(change))
-            # print(change)
         q_d = angles + change
         # print("\n =====================================")
         # print("angles: ",angles)
@@ -213,9 +212,8 @@ class image_converter:
         # print("\n ========================================")
         # print("Estimated angles: ", estimate_angles)
         # print("True red position: ", true_end)
-        #
         # print("Estimated coordinates: ", self.FK(estimate_angles)[0])
-        # print("Angle error: ", np.sqrt(np.sum((self.FK(estimate_angles)[0] - true_end) ** 2)))
+        # print("Angle error: ", np.sum(np.abs(self.FK(estimate_angles)[0] - true_end)))
 
         # ---------------------Test FK---------------------------------------------
         # input_theta = [0, 0, 1, 0]
@@ -241,7 +239,7 @@ class image_converter:
         # end effector coordinate from camera
         end_effector = Float64MultiArray()
         end_effector.data = true_end
-        # control the robot joints
+        #control the robot joints
         self.joint1 = Float64()
         self.joint1.data = q_d[0]
         self.joint2 = Float64()
@@ -250,7 +248,7 @@ class image_converter:
         self.joint3.data = q_d[2]
         self.joint4 = Float64()
         self.joint4.data = q_d[3]
-        # --------------------------Publish the results--------------------------------
+        #--------------------------Publish the results--------------------------------
         try:
             self.robot_joint1_pub.publish(self.joint1)
             self.robot_joint2_pub.publish(self.joint2)
